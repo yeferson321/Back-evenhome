@@ -1,4 +1,4 @@
-from controllers import datosCursosControllers, registroUserControllers, LoginUserControllers, actualizardatosUserControllers, editarvcdatosUserControllers, datosUserControllers, inputidiomaControllers, datosidiomaControllers, deteleidiomaControllers, inputconocimientosControllers, datosconocimientosControllers, inputhojadevidaControllers,datoshojadevidaControllers, registroEmpresaControllers, LoginEmpresaControllers, inputAnuncioControllers, datosEmpresaControllers, actualizardatosEmpresaControllers, datosAnunciosControllers, deteleAnuncioControllers, datosAnunciosAllControllers, consultaAnunciosControllers
+from controllers import datosCursosControllers, registroUserControllers, LoginUserControllers, actualizardatosUserControllers, editarvcdatosUserControllers, datosUserControllers, inputidiomaControllers, datosidiomaControllers, deteleidiomaControllers, inputconocimientosControllers, datosconocimientosControllers, inputhojadevidaControllers,datoshojadevidaControllers, registroEmpresaControllers, LoginEmpresaControllers, inputAnuncioControllers, datosEmpresaControllers, actualizardatosEmpresaControllers, datosAnunciosControllers, deteleAnuncioControllers, datosAnunciosAllControllers, consultaAnunciosControllers, generarcorreoUserControllers, VconlineControllers, VconlineidiomaControllers, VconlineconocimientosControllers
 
 user = {
 
@@ -20,6 +20,14 @@ user = {
 
     "input_hojadevida": "/api/v01/user/inputhojadevida", "input_hojadevida_controllers": inputhojadevidaControllers.as_view("input_hojadevida_api"),
     "datos_hojadevida": "/api/v01/user/datoshojadevida", "datos_hojadevida_controllers": datoshojadevidaControllers.as_view("datos_hojadevida_api"),
+
+    "generar_correo_user": "/api/v01/user/generarcorreo", "generar_correo_user_controllers": generarcorreoUserControllers.as_view("generar_correo_user_api"),
+
+    "vc_online": "/api/v01/user/vconline", "vc_online_controllers": VconlineControllers.as_view("vc_online_api"),
+
+    "vc_online_idioma": "/api/v01/user/vconlineidioma", "vc_online_idioma_controllers": VconlineidiomaControllers.as_view("vc_online_idioma_api"),
+
+    "vc_online_conocimientos": "/api/v01/user/vconlineconocimientos", "vc_online_conocimientos_controllers": VconlineconocimientosControllers.as_view("vc_online_conocimientos_api"),
 
     #
     # ------------------------------ Empresa --------------------------------------- #

@@ -11,6 +11,11 @@ import time
 import bcrypt
 import jwt
 import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email import encoders
+from email.mime.base import MIMEBase
 
 app = Flask(__name__)
 
@@ -562,7 +567,7 @@ class inputAnuncioControllers(MethodView):
     def post(self):
         time.sleep(.500)
         content = request.get_json()
-        trabajo = content.get("trabajo")
+        vacantes = content.get("vacantes")
         profesiones = content.get("profesiones")
         experiencia = content.get("experiencia")
         herramientas = content.get("herramientas")
@@ -575,8 +580,8 @@ class inputAnuncioControllers(MethodView):
         id_user = content.get("id")
         # comandos sql para agregar infomacion a la tabla users
         cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO `anuncios` (`titulo`, `profesiones`, `experiencia`, `herramientas`, `duracion`, `nivel`, `empleo`, `salario`, `descripcion`, `nombre`, `usuario_id`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-                    (trabajo, profesiones, experiencia, herramientas, duracion, nivel, empleo, salario, descripcion, nombre, id_user))
+        cur.execute("INSERT INTO `anuncios` (`numerovacantes`, `profesiones`, `experiencia`, `herramientas`, `duracion`, `nivel`, `empleo`, `salario`, `descripcion`, `nombre`, `usuario_id`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (vacantes, profesiones, experiencia, herramientas, duracion, nivel, empleo, salario, descripcion, nombre, id_user))
         mysql.connection.commit()
         cur.close()
 
@@ -634,14 +639,13 @@ class datosAnunciosControllers(MethodView):
         return jsonify({"Status": "No ha enviado un token"}), 403
 
 
-
 #
 #
 # ------------------------------ Anuncios --------------------------------------- #
 #
 #
 
-    
+
 class datosAnunciosAllControllers(MethodView):
     """
         datos
@@ -651,11 +655,18 @@ class datosAnunciosAllControllers(MethodView):
 
         datos_user = ""
         curl = mysql.connection.cursor()
-        curl.execute("select id_anuncio, titulo, profesiones, experiencia, herramientas, duracion, nivel, empleo, salario, descripcion, nombre from anuncios")
+        curl.execute("select id_anuncio, numerovacantes, profesiones, experiencia, herramientas, duracion, nivel, empleo, salario, descripcion, nombre, usuario_id, solicitudes from anuncios")
         dato = curl.fetchall()
         datos_anuncios = dato
 
-        return jsonify({"dato": datos_anuncios}), 200
+        data = []
+        objeto = {}
+        for value in dato:
+            objecto={'id_anuncio':value[0], 'numerovacantes':value[1], 'profesiones':value[2], 'experiencia':value[3], 'herramientas':value[4], 'duracion':value[5], 'nivel':value[6], 'empleo':value[7], 'salario':value[8], 'descripcion':value[9], 'nombre':value[10], 'usuario_id':value[11], 'solicitudes':value[12]}
+            data.append(objecto)
+            objecto = {} 
+
+        return jsonify({"dato": data}), 200
 
 
 class consultaAnunciosControllers(MethodView):
@@ -670,10 +681,162 @@ class consultaAnunciosControllers(MethodView):
 
         datos_user = ""
         curl = mysql.connection.cursor()
-        curl.execute(f'SELECT * FROM evenhome.anuncios where profesiones like "%{palabra}%" and herramientas like "%{habilidad}%" ')
+        curl.execute(f'SELECT id_anuncio, numerovacantes, profesiones, experiencia, herramientas, duracion, nivel, empleo, salario, descripcion, nombre, usuario_id, solicitudes FROM anuncios where profesiones like "%{palabra}%" and herramientas like "%{habilidad}%" ')
         dato = curl.fetchall()
         datos_anuncios = dato
 
-        print("ncin:", dato)
+        data = []
+        objeto = {}
+        for value in dato:
+            objecto={'id_anuncio':value[0], 'numerovacantes':value[1], 'profesiones':value[2], 'experiencia':value[3], 'herramientas':value[4], 'duracion':value[5], 'nivel':value[6], 'empleo':value[7], 'salario':value[8], 'descripcion':value[9], 'nombre':value[10], 'usuario_id':value[11], 'solicitudes':value[12]}
+            data.append(objecto)
+            objecto = {} 
 
-        return jsonify({"dato": datos_anuncios}), 200
+        return jsonify({"dato": data}), 200
+
+
+
+
+class generarcorreoUserControllers(MethodView):
+    def post(self):
+
+        if (request.headers.get('Authorization')):
+                token = request.headers.get('Authorization').split(" ")
+                data= jwt.decode(token[1], KEY_TOKEN_AUTH , algorithms=['HS256'])
+                correo = data.get("correo")
+
+                content = request.get_json()
+                id_anuncio = content.get('id_anuncio')
+                usuario_id = content.get('usuario_id')
+                profesiones = content.get('profesiones')
+                nombre = content.get('nombre')
+
+                curl = mysql.connection.cursor()
+                curl.execute("select correo from empresa where id_empresa=%s", ([usuario_id]))
+                user = curl.fetchone() 
+                user = user[0]
+                curl.close()
+
+                curl = mysql.connection.cursor()
+                curl.execute("select solicitudes from anuncios where id_anuncio=%s", ([id_anuncio]))
+                num = curl.fetchone() 
+                num = num[0]
+                curl.close()
+
+                cur = mysql.connection.cursor()
+                cur.execute(f'UPDATE anuncios SET solicitudes = "{num + 1}" WHERE id_anuncio= "{id_anuncio}"')
+                mysql.connection.commit()
+                cur.close()
+
+                #credenciales
+                proveedor_correo = 'smtp.live.com: 587'
+                remitente = 'evenhome90@gmail.com'
+                password = 'flzqxbqmbfbplwxm'
+                #conexion a servidor
+                #servidor = smtplib.SMTP(proveedor_correo)
+                servidor = smtplib.SMTP('smtp.gmail.com:587')
+                servidor.starttls()
+                servidor.ehlo()
+                #autenticacion
+                servidor.login(remitente, password)
+                #mensaje 
+               
+                #envio correo al empresa
+                mensaje_institucion = "<h2> <h2 style='text-align: center; color:  #1ed760; font-family: cursive;'>Evenhome<h2/> <br> <h2 style='text-align: center; color:  #1ed760;'>Se acaba de generar una nueva solicitud de empleo a tu anuncio '{}'<br> <h3 style='text-align: center; color: #000000;'>Tienes 3 dias para responder este mensaje, de no hacerlo perderas a uno de los mejores talentos<br>Puedes comunicarte con tu talento al siguiente correo: {}<br>Mira su Vc Online en Evenhome http://localhost:4200/vc_online_usuario<h3/> <br> <p style='text-align: center; color: #88898c;'>Recibes este email por estar registrado en Evenhome<p> <h2/>".format(profesiones,correo)
+                msg = MIMEMultipart()
+                msg.attach(MIMEText(mensaje_institucion, 'html'))
+                #correo
+                msg['From'] = remitente
+                #correo destinatario
+                msg['To'] = user
+                msg['Subject'] = 'Nueva solicitud de empleo'
+                servidor.sendmail(msg['From'] , msg['To'], msg.as_string())
+
+                #envio correo al usuario
+                mensaje_institucion = "<h2> <h2 style='text-align: center; color:  #1ed760; font-family: cursive;'>Evenhome<h2/> <br> <h2 style='text-align: center; color:  #1ed760;'>Se acaba de inscribir a la oferta remota '{}'<br> <h3 style='text-align: center; color: #000000;'>La empresa '{}' Tienes 3 dias para ponerse en contacto con tigo, de no hacerlo se cancelara el proceso<br><h3/> <br> <p style='text-align: center; color: #88898c;'>Recibes este email por estar registrado en Evenhome<p> <h2/>".format(profesiones,nombre)
+                msg = MIMEMultipart()
+                msg.attach(MIMEText(mensaje_institucion, 'html'))
+                #correo
+                msg['From'] = remitente
+                #correo destinatario
+                msg['To'] = correo
+                msg['Subject'] = 'Inscripcion a oferta remota'
+                servidor.sendmail(msg['From'] , msg['To'], msg.as_string())
+                
+                return jsonify({"registro ok": True,}), 200
+        return jsonify({"Status": "No ha enviado un token"}), 403
+
+
+class VconlineControllers(MethodView):
+    """
+        datos
+    """
+
+    def get(self):
+        content = request.get_json()
+
+        id_user = 1
+
+        curl = mysql.connection.cursor()
+        curl.execute("select id_user, correo, nombre, apellidos, genero, cargo, tipoidentificacion, identificacion, fechanacimiento, estadocivil, telefono, otrotelefono, horadecontacto, pais, cuidad, direccion, hoja_vida from usuario where id_user=%s", ([id_user]))
+        datosuser = curl.fetchall()
+        curl.close()
+
+        datosusuario = []
+        objeto = {}
+        for value in datosuser:
+            objecto={'id_user':value[0], 'correo':value[1], 'nombre':value[2], 'apellidos':value[3], 'genero':value[4], 'cargo':value[5], 'tipoidentificacion':value[6], 'identificacion':value[7], 'fechanacimiento':value[8], 'estadocivil':value[9], 'telefono':value[10], 'otrotelefono':value[11], 'horadecontacto':value[12], 'pais':value[13], 'cuidad':value[14], 'direccion':value[15], 'hoja_vida':value[16]}
+            datosusuario.append(objecto)
+            objecto = {} 
+
+        return jsonify({"datosusuario": datosusuario}), 200
+
+
+class VconlineidiomaControllers(MethodView):
+    """
+        datos
+    """
+
+    def get(self):
+        content = request.get_json()
+
+        id_user = 1
+
+        curl = mysql.connection.cursor()
+        curl.execute("select id_idioma, idiomas, nivel, usuario_id from idioma where usuario_id=%s", ([id_user]))
+        datos = curl.fetchall()
+        curl.close()
+
+        datosidioma = []
+        objeto = {}
+        for value in datos:
+            objecto={'id_idioma':value[0], 'idiomas':value[1], 'nivel':value[2], 'usuario_id':value[3]}
+            datosidioma.append(objecto)
+            objecto = {} 
+
+        return jsonify({"datosidioma": datosidioma}), 200
+
+
+class VconlineconocimientosControllers(MethodView):
+    """
+        datos
+    """
+
+    def get(self):
+        content = request.get_json()
+
+        id_user = 1
+
+        curl = mysql.connection.cursor()
+        curl.execute("select id_conocimientos, conocimientosescritos, usuario_id from conocimientos where usuario_id=%s", ([id_user]))
+        dato = curl.fetchall()
+        curl.close()
+
+        datosconocimientos = []
+        objeto = {}
+        for value in dato:
+            objecto={'id_conocimientos':value[0], 'conocimientosescritos':value[1], 'usuario_id':value[2]}
+            datosconocimientos.append(objecto)
+            objecto = {} 
+
+        return jsonify({"datosconocimientos": datosconocimientos}), 200

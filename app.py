@@ -34,6 +34,14 @@ app.add_url_rule(user["datos_conocimientos"], view_func=user["datos_conocimiento
 app.add_url_rule(user["input_hojadevida"], view_func=user["input_hojadevida_controllers"])
 app.add_url_rule(user["datos_hojadevida"], view_func=user["datos_hojadevida_controllers"])
 
+app.add_url_rule(user["generar_correo_user"], view_func=user["generar_correo_user_controllers"])
+
+app.add_url_rule(user["vc_online"], view_func=user["vc_online_controllers"])
+
+app.add_url_rule(user["vc_online_idioma"], view_func=user["vc_online_idioma_controllers"])
+
+app.add_url_rule(user["vc_online_conocimientos"], view_func=user["vc_online_conocimientos_controllers"])
+
 #
 # ------------------------------ Empresa --------------------------------------- #
 #

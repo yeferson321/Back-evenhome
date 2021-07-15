@@ -64,7 +64,7 @@ UNIQUE INDEX (`correo` ASC)
 
 create table anuncios(
 id_anuncio int primary key auto_increment,
-titulo varchar(30) not null,
+numerovacantes int(15) not null,
 profesiones char(26) not null,
 experiencia char(17) not null,
 herramientas char(255) not null,
@@ -75,5 +75,6 @@ salario char(15) not null,
 descripcion char(255) not null,
 nombre char(20) not null,
 usuario_id int not null,
+solicitudes int not null,
 foreign key(usuario_id) references empresa(id_empresa)
 );
